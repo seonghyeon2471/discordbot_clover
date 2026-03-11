@@ -5,7 +5,9 @@ import json
 import os
 import random  # 랜덤 모듈
 
-intents = discord.Intents.all()
+intents = discord.Intents.default()
+intents.message_content = True
+
 bot = commands.Bot(command_prefix="이!", intents=intents, help_command=None)
 
 CONFIG_FILE = "naru_config.json"  # 내용 저장할 json파일
