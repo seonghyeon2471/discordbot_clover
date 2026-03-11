@@ -1,4 +1,4 @@
-# clover_render_stable.py
+# clover_render_stable_safe.py
 import discord
 from discord.ext import commands
 from discord.utils import get
@@ -7,9 +7,10 @@ import threading
 import json
 import os
 import random
+import asyncio
 
 # ----------------------
-# Flask Keep-Alive 서버 (Render 무료 플랜 24시간)
+# Flask Keep-Alive 서버 (Render 무료 플랜)
 # ----------------------
 app = Flask("")
 
@@ -17,11 +18,11 @@ app = Flask("")
 def home():
     return "Bot is alive!"
 
-def run():
+def run_flask():
     app.run(host="0.0.0.0", port=8080)
 
-# Flask 서버를 별도 스레드에서 실행
-t = threading.Thread(target=run)
+# daemon=True로 스레드 실행
+t = threading.Thread(target=run_flask, daemon=True)
 t.start()
 
 # ----------------------
@@ -128,9 +129,14 @@ async def on_message(message):
 
     if counting_active and TARGET_CHANNEL_ID and message.channel.id == TARGET_CHANNEL_ID:
         message_list.append(message)
+
         if len(message_list) % 4 == 0:
-            await message.add_reaction("✅")
-            reacted_messages.append(message)
+            # 429 Too Many Requests 대비
+            try:
+                await message.add_reaction("✅")
+                reacted_messages.append(message)
+            except discord.HTTPException:
+                await asyncio.sleep(1)  # 잠깐 쉬고 무시
         else:
             # 이전 리액션 제거
             try:
@@ -138,7 +144,10 @@ async def on_message(message):
                     if str(reaction.emoji) == "✅":
                         users = [user async for user in reaction.users()]
                         if bot.user in users:
-                            await reaction.remove(bot.user)
+                            try:
+                                await reaction.remove(bot.user)
+                            except discord.HTTPException:
+                                await asyncio.sleep(1)
             except:
                 pass
 
@@ -152,8 +161,8 @@ async def on_message_delete(message):
         if message in reacted_messages:
             try:
                 await message.clear_reactions()
-            except:
-                pass
+            except discord.HTTPException:
+                await asyncio.sleep(1)
             reacted_messages.remove(message)
 
 # ----------------------
