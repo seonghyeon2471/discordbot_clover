@@ -171,4 +171,5 @@ async def help_command(ctx, command_name: str = None):
 # ----------------------
 # 봇 실행
 # ----------------------
-bot.run("DISCORD_TOKEN")
+import os
+bot.run(os.environ["DISCORD_TOKEN"])
