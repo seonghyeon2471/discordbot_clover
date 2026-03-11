@@ -1,21 +1,42 @@
+# clover_render_stable.py
 import discord
 from discord.ext import commands
 from discord.utils import get
+from flask import Flask
+import threading
 import json
 import os
-import random  # 랜덤 모듈
+import random
 
+# ----------------------
+# Flask Keep-Alive 서버 (Render 무료 플랜 24시간)
+# ----------------------
+app = Flask("")
+
+@app.route("/")
+def home():
+    return "Bot is alive!"
+
+def run():
+    app.run(host="0.0.0.0", port=8080)
+
+# Flask 서버를 별도 스레드에서 실행
+t = threading.Thread(target=run)
+t.start()
+
+# ----------------------
+# 디스코드 봇 설정
+# ----------------------
 intents = discord.Intents.default()
 intents.message_content = True
 
 bot = commands.Bot(command_prefix="이!", intents=intents, help_command=None)
 
-CONFIG_FILE = "naru_config.json"  # 내용 저장할 json파일
-TARGET_CHANNEL_ID = None  # 채널 ID
-counting_active = False  # 채팅 수 세기 시작/종료
-
+CONFIG_FILE = "naru_config.json"
+TARGET_CHANNEL_ID = None
+counting_active = False
 message_list = []
-reacted_messages = []  # 4번째 메시지 추적
+reacted_messages = []
 
 # ----------------------
 # 기존 설정 불러오기
@@ -39,16 +60,12 @@ async def on_ready():
 async def 채널설정(ctx, *, channel_name):
     global TARGET_CHANNEL_ID
     channel = get(ctx.guild.channels, name=channel_name)
-    
     if channel is None:
         await ctx.send(f"'{channel_name}' 채널을 찾을 수 없습니다.")
         return
-
     TARGET_CHANNEL_ID = channel.id
-    # 새 파일에 저장
     with open(CONFIG_FILE, "w") as f:
         json.dump({"TARGET_CHANNEL_ID": TARGET_CHANNEL_ID}, f)
-
     await ctx.send(f"채널이 <#{TARGET_CHANNEL_ID}> 로 설정되었습니다!")
 
 # ----------------------
@@ -60,7 +77,6 @@ async def start_count(ctx):
     if TARGET_CHANNEL_ID is None:
         await ctx.send("먼저 이!채널설정으로 채널을 설정해주세요.")
         return
-
     counting_active = True
     message_list = []
     reacted_messages = []
@@ -73,14 +89,12 @@ async def stop_count(ctx):
     await ctx.send("채팅 수 세기를 종료했습니다.")
 
 # ----------------------
-# 공통 채널 체크 (지정 채널이 아니면 아무 반응 없음)
+# 공통 채널 체크
 # ----------------------
 async def channel_check(ctx):
     if TARGET_CHANNEL_ID is None:
         return False
-    if ctx.channel.id != TARGET_CHANNEL_ID:
-        return False
-    return True
+    return ctx.channel.id == TARGET_CHANNEL_ID
 
 # ----------------------
 # 명령어 (특정 채널 제한)
@@ -101,9 +115,8 @@ async def 돼지(ctx):
 async def 나루(ctx):
     if not await channel_check(ctx):
         return
-    choices = ["바보", "돼지", "토끼"]  # 랜덤 선택지
-    selected = random.choice(choices)
-    await ctx.send(f"{selected}")
+    choices = ["바보", "돼지", "토끼"]
+    await ctx.send(random.choice(choices))
 
 # ----------------------
 # 메시지 이벤트 처리
@@ -115,17 +128,15 @@ async def on_message(message):
 
     if counting_active and TARGET_CHANNEL_ID and message.channel.id == TARGET_CHANNEL_ID:
         message_list.append(message)
-
-        # 4번째마다 리액션 추가
         if len(message_list) % 4 == 0:
             await message.add_reaction("✅")
             reacted_messages.append(message)
         else:
-            # 4번째가 아닌데 봇이 달았던 ✅ 리액션 제거
+            # 이전 리액션 제거
             try:
                 for reaction in message.reactions:
                     if str(reaction.emoji) == "✅":
-                        users = await reaction.users().flatten()
+                        users = [user async for user in reaction.users()]
                         if bot.user in users:
                             await reaction.remove(bot.user)
             except:
@@ -138,7 +149,6 @@ async def on_message_delete(message):
     if TARGET_CHANNEL_ID and message.channel.id == TARGET_CHANNEL_ID:
         if message in message_list:
             message_list.remove(message)
-
         if message in reacted_messages:
             try:
                 await message.clear_reactions()
@@ -151,27 +161,20 @@ async def on_message_delete(message):
 # ----------------------
 @bot.command(name="help", help="사용 가능한 명령어를 표시합니다.")
 async def help_command(ctx, command_name: str = None):
-    """자동 help 명령어. 명령어 이름 입력 시 상세 설명, 없으면 전체 목록"""
-    
     if command_name:
-        # 특정 명령어 도움말
         command = bot.get_command(command_name)
         if command and command.help:
             await ctx.send(f"**이!{command.name}** : {command.help}")
         else:
             await ctx.send(f"명령어 `{command_name}` 에 대한 설명이 없습니다.")
         return
-
-    # 전체 명령어 목록 (help 속성이 있는 것만)
     help_text = "**사용 가능한 명령어 목록**\n"
     for cmd in bot.commands:
-        if not cmd.hidden and cmd.help:  # help 속성이 있는 것만 표시
+        if not cmd.hidden and cmd.help:
             help_text += f"- `이!{cmd.name}` : {cmd.help}\n"
-
     await ctx.send(help_text)
 
 # ----------------------
 # 봇 실행
 # ----------------------
-import os
 bot.run(os.environ["DISCORD_TOKEN"])
