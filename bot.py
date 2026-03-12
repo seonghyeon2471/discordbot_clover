@@ -1,3 +1,5 @@
+pip3 install python-dotenv
+
 # bot.py
 import discord
 from discord.ext import commands
