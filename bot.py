@@ -2,32 +2,16 @@
 import discord
 from discord.ext import commands
 from discord.utils import get
-from flask import Flask
-import threading
-import json
 import os
+import json
 import random
 
 # ----------------------
-# Flask Keep-Alive 서버 (24시간)
-# ----------------------
-app = Flask("")
-
-@app.route("/")
-def home():
-    return "Bot is alive!"
-
-def run_flask():
-    app.run(host="0.0.0.0", port=5000)  # 5000번 포트 사용
-
-# 별도 스레드에서 Flask 실행
-threading.Thread(target=run_flask, daemon=True).start()
-
-# ----------------------
-# 디스코드 봇 설정
+# 봇 설정
 # ----------------------
 intents = discord.Intents.default()
 intents.message_content = True
+
 bot = commands.Bot(command_prefix="이!", intents=intents, help_command=None)
 
 CONFIG_FILE = "naru_config.json"
@@ -95,7 +79,7 @@ async def channel_check(ctx):
     return ctx.channel.id == TARGET_CHANNEL_ID
 
 # ----------------------
-# 명령어 (특정 채널 제한)
+# 명령어 예제
 # ----------------------
 @bot.command(name="나바")
 async def 나바(ctx):
@@ -154,7 +138,7 @@ async def on_message_delete(message):
             reacted_messages.remove(message)
 
 # ----------------------
-# help 명령어
+# 자동 help
 # ----------------------
 @bot.command(name="help", help="사용 가능한 명령어를 표시합니다.")
 async def help_command(ctx, command_name: str = None):
@@ -165,6 +149,7 @@ async def help_command(ctx, command_name: str = None):
         else:
             await ctx.send(f"명령어 `{command_name}` 에 대한 설명이 없습니다.")
         return
+
     help_text = "**사용 가능한 명령어 목록**\n"
     for cmd in bot.commands:
         if not cmd.hidden and cmd.help:
