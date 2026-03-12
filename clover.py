@@ -177,4 +177,4 @@ async def help_command(ctx, command_name: str = None):
 # ----------------------
 # 봇 실행
 # ----------------------
-bot.run("MTQ4MTI4NDM3NzUwODk3NDgxNw.GIUWrk.dWUNPDA64Lpm4CoQoHidmGrS4r-MvF_Zd7faco")
+bot.run(os.environ["DISCORD_TOKEN"])
