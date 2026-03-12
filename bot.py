@@ -18,7 +18,7 @@ def home():
     return "Bot is alive!"
 
 def run():
-    app.run(host="0.0.0.0", port=8080)
+    app.run(host="0.0.0.0", port=5000)  # 5000번 등 빈 포트로 변경
 
 # Flask 서버를 별도 스레드에서 실행
 t = threading.Thread(target=run)
@@ -177,4 +177,4 @@ async def help_command(ctx, command_name: str = None):
 # ----------------------
 # 봇 실행
 # ----------------------
-bot.run("MTQ4MTI4NDM3NzUwODk3NDgxNw.GIUWrk.dWUNPDA64Lpm4CoQoHidmGrS4r-MvF_Zd7faco")
+bot.run(os.environ["DISCORD_TOKEN"])
