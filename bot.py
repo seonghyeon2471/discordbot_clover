@@ -1,4 +1,4 @@
-# clover_render_stable.py
+# bot.py
 import discord
 from discord.ext import commands
 from discord.utils import get
@@ -9,7 +9,7 @@ import os
 import random
 
 # ----------------------
-# Flask Keep-Alive 서버 (Render 무료 플랜 24시간)
+# Flask Keep-Alive 서버 (24시간)
 # ----------------------
 app = Flask("")
 
@@ -17,19 +17,17 @@ app = Flask("")
 def home():
     return "Bot is alive!"
 
-def run():
-    app.run(host="0.0.0.0", port=5000)  # 5000번 등 빈 포트로 변경
+def run_flask():
+    app.run(host="0.0.0.0", port=5000)  # 5000번 포트 사용
 
-# Flask 서버를 별도 스레드에서 실행
-t = threading.Thread(target=run)
-t.start()
+# 별도 스레드에서 Flask 실행
+threading.Thread(target=run_flask, daemon=True).start()
 
 # ----------------------
 # 디스코드 봇 설정
 # ----------------------
 intents = discord.Intents.default()
 intents.message_content = True
-
 bot = commands.Bot(command_prefix="이!", intents=intents, help_command=None)
 
 CONFIG_FILE = "naru_config.json"
@@ -132,7 +130,6 @@ async def on_message(message):
             await message.add_reaction("✅")
             reacted_messages.append(message)
         else:
-            # 이전 리액션 제거
             try:
                 for reaction in message.reactions:
                     if str(reaction.emoji) == "✅":
@@ -157,7 +154,7 @@ async def on_message_delete(message):
             reacted_messages.remove(message)
 
 # ----------------------
-# 자동 help 명령어
+# help 명령어
 # ----------------------
 @bot.command(name="help", help="사용 가능한 명령어를 표시합니다.")
 async def help_command(ctx, command_name: str = None):
