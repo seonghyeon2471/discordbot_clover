@@ -4,6 +4,8 @@ pip3 install python-dotenv
 import discord
 from discord.ext import commands
 from discord.utils import get
+from dotenv import load_dotenv
+load_dotenv()  # .env 불러오기
 import os
 import json
 import random
