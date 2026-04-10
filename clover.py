@@ -169,7 +169,7 @@ async def help_command(ctx, command_name: str = None):
     await ctx.send(help_text)
 
 if __name__ == "__main__":
-    token = sys.argv[1] if len(sys.argv) > 1 else os.environ.get("DISCORD_TOKEN", "")
+    token = os.getenv("DISCORD_CLOVERTOKEN")
     if not token:
         print("ERROR: No token provided", flush=True)
         sys.exit(1)
