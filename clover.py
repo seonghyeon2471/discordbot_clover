@@ -5,9 +5,6 @@ import json
 import os
 import random
 import sys
-from dotenv import load_dotenv
-
-load_dotenv()
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -167,8 +164,15 @@ async def help_command(ctx, command_name: str = None):
     await ctx.send(help_text)
 
 if __name__ == "__main__":
+    from dotenv import load_dotenv
+    import os
+
+    load_dotenv()
+
     token = os.getenv("DISCORD_CLOVERTOKEN")
+
     if not token:
-        print("ERROR: No token provided", flush=True)
-        sys.exit(1)
+        print("ERROR: No token found")
+        exit(1)
+
     bot.run(token)
